@@ -1,11 +1,15 @@
 package com.volpis.test.test_asynctask_service_handler;
 
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.IBinder;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.volpis.test.test_asynctask_service_handler.db.DB;
+import com.volpis.test.test_asynctask_service_handler.db.DBHelper;
 import com.volpis.test.test_asynctask_service_handler.model.GoogleResults;
 import com.volpis.test.test_asynctask_service_handler.model.RealmResult;
 
@@ -35,12 +39,21 @@ import io.realm.RealmResults;
 public class TestService extends Service {
 
     Realm realm;
+    DB db;
 
 
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public void onCreate() {
+        super.onCreate();
+        db = new DB(this);
+        db.open();
 
+        //mDBHelper = new DBHelper(this);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
         sendRequest(intent);
         return super.onStartCommand(intent, flags, startId);
 
@@ -89,7 +102,12 @@ public class TestService extends Service {
                     realm.beginTransaction();
 
                     for (GoogleResults.Result temp:list){
+                        //SqlLite
+                        db.add(temp);
 
+
+
+                        //Realm DB
                        RealmResult dbResult = realm.where(RealmResult.class)
                                             .equalTo("url",temp.getUrl())
                                             .findFirst();
@@ -125,6 +143,17 @@ public class TestService extends Service {
             }
         }).start();
     }
+
+
+//    public void insertDB(GoogleResults.Result result){
+//        ContentValues cv = new ContentValues();
+//        SQLiteDatabase db = mDBHelper.getWritableDatabase();
+//
+//        cv.put("url", result.getUrl());
+//        cv.put("title", result.getTitle());
+//
+//        long rowID = db.insert("testtable", null, cv);
+//    }
 //
 //    private static String convertInputStreamToString(InputStream inputStream) throws IOException{
 //        BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));

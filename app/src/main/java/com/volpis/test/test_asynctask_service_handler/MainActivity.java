@@ -1,9 +1,14 @@
 package com.volpis.test.test_asynctask_service_handler;
 
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -12,16 +17,18 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import com.volpis.test.test_asynctask_service_handler.adapter.MyAdapter;
+import com.volpis.test.test_asynctask_service_handler.db.DB;
 import com.volpis.test.test_asynctask_service_handler.model.RealmResult;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
 
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener{
+public class MainActivity extends ActionBarActivity implements View.OnClickListener,LoaderManager.LoaderCallbacks<Cursor> {
 
 
     Button mButtonService;
@@ -35,11 +42,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     Handler mHandler;
 
     ListView mListViewService;
+    ListView mListViewServiceSQLLite;
 
     private Realm realm;
 
     final static int STATUS_NONE = 0;
     final static int STATUS_LOADING = 1;
+
+    DB db;
+    SimpleCursorAdapter scAdapter;
 
 
 
@@ -49,6 +60,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        db = new DB(this);
+        db.open();
+
         mButtonHandler = (Button)findViewById(R.id.button_handler_start);
         mButtonService = (Button) findViewById(R.id.button_service_start);
         mButtonAsynckTask = (Button)findViewById(R.id.button_asynctask_start);
@@ -56,6 +70,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         mProgressBarAsynckTask =(ProgressBar)findViewById(R.id.progressbar_async_task);
         mProgressBarService =(ProgressBar)findViewById(R.id.progressbar_service);
         mListViewService = (ListView)findViewById(R.id.listView_service);
+        mListViewServiceSQLLite = (ListView)findViewById(R.id.listView_service_sqllite);
 
         realm = Realm.getInstance(this);
         RealmResults<RealmResult> listSearch = realm.where(RealmResult.class).findAll();
@@ -88,9 +103,25 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         };
         mHandler.sendEmptyMessage(STATUS_NONE);
 
+        // формируем столбцы сопоставления
+        String[] from = new String[] { DB.COLUMN_TITLE, DB.COLUMN_URL };
+        int[] to = new int[] { R.id.title, R.id.url };
+
+        // создааем адаптер и настраиваем список
+        scAdapter = new SimpleCursorAdapter(this, R.layout.item, null, from, to, 0);
+
+        mListViewServiceSQLLite.setAdapter(scAdapter);
+
+        // создаем лоадер для чтения данных
+        getSupportLoaderManager().initLoader(0, null, this);
 
 
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        realm.close();
     }
 
     @Override
@@ -168,6 +199,23 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new MyCursorLoader(this, db);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        scAdapter.swapCursor(data);
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
+
     class TestAssynckTask extends AsyncTask<Void,Void,Void>{
 
         @Override
@@ -189,6 +237,23 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             mProgressBarAsynckTask.setVisibility(View.INVISIBLE);
             mButtonAsynckTask.setEnabled(true);
         }
+    }
+
+    static class MyCursorLoader extends CursorLoader {
+
+        DB db;
+
+        public MyCursorLoader(Context context, DB db) {
+            super(context);
+            this.db = db;
+        }
+
+        @Override
+        public Cursor loadInBackground() {
+            Cursor cursor = db.getAllData();
+            return cursor;
+        }
+
     }
 
 }
