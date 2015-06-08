@@ -103,16 +103,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         };
         mHandler.sendEmptyMessage(STATUS_NONE);
 
-        // формируем столбцы сопоставления
         String[] from = new String[] { DB.COLUMN_TITLE, DB.COLUMN_URL };
         int[] to = new int[] { R.id.title, R.id.url };
 
-        // создааем адаптер и настраиваем список
-        scAdapter = new SimpleCursorAdapter(this, R.layout.item, null, from, to, 0);
 
+        scAdapter = new SimpleCursorAdapter(this, R.layout.item, null, from, to, 0);
         mListViewServiceSQLLite.setAdapter(scAdapter);
 
-        // создаем лоадер для чтения данных
         getSupportLoaderManager().initLoader(0, null, this);
 
 
