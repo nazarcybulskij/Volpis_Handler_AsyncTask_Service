@@ -10,8 +10,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.volpis.test.test_asynctask_service_handler.adapter.MyAdapter;
+import com.volpis.test.test_asynctask_service_handler.model.RealmResult;
+
+import io.realm.Realm;
+import io.realm.RealmResults;
 
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener{
@@ -26,6 +33,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     ProgressBar mProgressBarService;
 
     Handler mHandler;
+
+    ListView mListViewService;
+
+    private Realm realm;
 
     final static int STATUS_NONE = 0;
     final static int STATUS_LOADING = 1;
@@ -44,6 +55,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         mProgressBarHandler =(ProgressBar)findViewById(R.id.progressbar_handler);
         mProgressBarAsynckTask =(ProgressBar)findViewById(R.id.progressbar_async_task);
         mProgressBarService =(ProgressBar)findViewById(R.id.progressbar_service);
+        mListViewService = (ListView)findViewById(R.id.listView_service);
+
+        realm = Realm.getInstance(this);
+        RealmResults<RealmResult> listSearch = realm.where(RealmResult.class).findAll();
+        final MyAdapter adapter = new MyAdapter(this, R.id.listView_service, listSearch, true);
+
+        mListViewService.setAdapter(adapter);
 
         mButtonHandler.setOnClickListener(this);
         mButtonAsynckTask.setOnClickListener(this);
