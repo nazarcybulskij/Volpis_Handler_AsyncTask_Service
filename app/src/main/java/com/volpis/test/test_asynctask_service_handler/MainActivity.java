@@ -1,5 +1,6 @@
 package com.volpis.test.test_asynctask_service_handler;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
@@ -143,6 +144,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     public void clickServiceButton(){
+        Intent intent=new Intent(MainActivity.this,TestService.class);
+        intent.putExtra("search","Volpis");
+        startService(intent);
 
     }
 
